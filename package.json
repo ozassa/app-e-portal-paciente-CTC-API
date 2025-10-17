@@ -1,0 +1,48 @@
+{
+  "name": "ctc-backend-api",
+  "version": "1.0.0",
+  "description": "Backend API for CTC Portal do Paciente",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": ["api", "rest", "express", "prisma", "healthcare"],
+  "author": "CTC",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "axios": "^1.7.7",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "twilio": "^5.3.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.14.0",
+    "@typescript-eslint/parser": "^8.14.0",
+    "eslint": "^9.14.0",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3",
+    "prisma": "^5.20.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

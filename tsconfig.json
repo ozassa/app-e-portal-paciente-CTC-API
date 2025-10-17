@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "types": ["node"],
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@controllers/*": ["./controllers/*"],
+      "@services/*": ["./services/*"],
+      "@middlewares/*": ["./middlewares/*"],
+      "@config/*": ["./config/*"],
+      "@utils/*": ["./utils/*"],
+      "@types/*": ["./types/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
