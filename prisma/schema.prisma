@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id          String   @id @default(cuid())
+  cpf         String   @unique
+  name        String
+  phone       String
+  email       String?
+  password    String
+  avatar      String?
+  plan        String   @default("Plano Básico")
+  cardNumber  String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  dependents      Dependent[]
+  appointments    Appointment[]
+  notifications   Notification[]
+  authSessions    AuthSession[]
+
+  @@map("users")
+}
+
+// Dependent model
+model Dependent {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  cpf          String   @unique
+  relationship String   // spouse, child, parent, other
+  birthDate    DateTime?
+  cardNumber   String   @unique
+  plan         String   @default("Plano Básico")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@map("dependents")
+}
+
+// Medical specialty model
+model Specialty {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  icon        String?
+
+  // Relations
+  doctors      Doctor[]
+  appointments Appointment[]
+  unitSpecialties UnitSpecialty[]
+
+  @@map("specialties")
+}
+
+// Health unit model
+model Unit {
+  id          String  @id @default(cuid())
+  name        String
+  address     String
+  city        String
+  state       String
+  zipCode     String
+  phone       String
+  email       String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  doctors       Doctor[]
+  appointments  Appointment[]
+  workingHours  WorkingHours[]
+  specialties   UnitSpecialty[]
+
+  @@map("units")
+}
+
+// Junction table for Unit-Specialty many-to-many
+model UnitSpecialty {
+  id         String @id @default(cuid())
+  unitId     String
+  specialtyId String
+
+  unit       Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  specialty  Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, specialtyId])
+  @@map("unit_specialties")
+}
+
+// Doctor model
+model Doctor {
+  id          String  @id @default(cuid())
+  unitId      String
+  specialtyId String
+  name        String
+  crm         String  @unique
+  photo       String?
+  bio         String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
+  appointments Appointment[]
+  availability DoctorAvailability[]
+
+  @@map("doctors")
+}
+
+// Working hours for units
+model WorkingHours {
+  id        String @id @default(cuid())
+  unitId    String
+  dayOfWeek Int    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  openTime  String // Format: "HH:mm"
+  closeTime String // Format: "HH:mm"
+  isClosed  Boolean @default(false)
+
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, dayOfWeek])
+  @@map("working_hours")
+}
+
+// Doctor availability
+model DoctorAvailability {
+  id       String @id @default(cuid())
+  doctorId String
+  date     DateTime @db.Date
+  timeSlot String   // Format: "HH:mm"
+  isBooked Boolean  @default(false)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, date, timeSlot])
+  @@map("doctor_availability")
+}
+
+// Appointment model
+model Appointment {
+  id           String            @id @default(cuid())
+  userId       String
+  dependentId  String?
+  unitId       String
+  specialtyId  String
+  doctorId     String
+  date         DateTime          @db.Date
+  time         String            // Format: "HH:mm"
+  status       AppointmentStatus @default(SCHEDULED)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+  dependent Dependent? @relation(fields: [dependentId], references: [id])
+  unit      Unit       @relation(fields: [unitId], references: [id])
+  specialty Specialty  @relation(fields: [specialtyId], references: [id])
+  doctor    Doctor     @relation(fields: [doctorId], references: [id])
+
+  @@map("appointments")
+}
+
+// Notification model
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  data      Json?            // Additional data for the notification
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Auth session model for 2FA and refresh tokens
+model AuthSession {
+  id            String    @id @default(cuid())
+  userId        String
+  sessionId     String    @unique
+  twoFactorCode String?
+  phoneNumber   String?
+  refreshToken  String?   @unique
+  isVerified    Boolean   @default(false)
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_sessions")
+}
+
+// Enums
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  APPOINTMENT
+  REMINDER
+  UPDATE
+  PROMOTION
+  SYSTEM
+}
